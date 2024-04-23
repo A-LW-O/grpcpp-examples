@@ -4,6 +4,7 @@
 
 -   A c++ compiler (defaults to gcc)
 -   cmake >= 3.15
+-   ninja
 -   conan >= 2.x
 
 ## Build
