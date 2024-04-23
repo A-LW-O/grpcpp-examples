@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package keyvaluestore;
+
+service KeyValueStore {
+  rpc GetValues (stream Request) returns (stream Response) {}
+}
+
+message Request {
+  string key = 1;
+}
+
+message Response {
+  string value = 1;
+}

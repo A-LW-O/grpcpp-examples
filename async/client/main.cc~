@@ -1,0 +1,49 @@
+#include <string>
+#include <absl/log/check.h>
+
+#include <grpcpp/grpcpp.h>
+
+#include "helloworld.grpc.pb.h"
+
+namespace hw = helloworld;
+
+class GreeterClient {
+public:
+  explicit GreeterClient(std::shared_ptr<grpc::Channel> channel)
+    : stub_(hw::Greeter::NewStub(channel)) {
+  }
+
+  std::string SayHello(const std::string& user) {
+    auto request = hw::HelloRequest();
+    request.set_name(user);
+    auto reply = hw::HelloReply();
+    auto context = grpc::ClientContext();
+
+    auto cq = grpc::CompletionQueue();
+    auto status = grpc::Status();
+
+    auto rpc = stub_->AsyncSayHello(&context, request, &cq);
+    rpc->Finish(&reply, &status, (void*)1);
+
+    void* got_tag;
+    bool ok = false;
+    CHECK(cq.Next(&got_tag, &ok));
+    CHECK_EQ(got_tag, (void*)1);
+    CHECK(ok);
+    
+    if (!status.ok()) {
+      return "RPC failed";
+    }
+
+    return reply.message();
+  }
+
+private:
+  std::unique_ptr<hw::Greeter::Stub> stub_;
+};
+
+int main() {
+  auto greeter = GreeterClient(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+  greeter.SayHello("world");
+  return 0;
+}
